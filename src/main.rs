@@ -1,11 +1,11 @@
 mod assignment_1;
+mod assignment_2;
 
 use dotenv;
 use project_root;
 use reqwest::header::COOKIE;
 
 use advent_2022::Assignment;
-use assignment_1::Assignment1;
 
 #[tokio::main]
 async fn get_input(assignment_id: &u8) -> String {
@@ -61,8 +61,12 @@ fn main() {
     let input = get_input(&assignment);
     let result = match assignment {
         1 => {
-            let ass = Assignment1::new();
-            ass.run(input, debug_case)
+            let sol = assignment_1::Solution::new();
+            sol.run(input, debug_case)
+        }
+        2 => {
+            let sol = assignment_2::Solution::new();
+            sol.run(input, debug_case)
         }
         _ => (
             String::from("No answer found"),

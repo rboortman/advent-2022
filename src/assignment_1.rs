@@ -1,12 +1,12 @@
 use advent_2022::Assignment;
 
-pub struct Assignment1 {
+pub struct Solution {
     test_input: String,
 }
 
-impl Assignment1 {
-    pub fn new() -> Assignment1 {
-        Assignment1 {
+impl Solution {
+    pub fn new() -> Solution {
+        Solution {
             test_input: String::from("199\n200\n208\n210\n200\n207\n240\n269\n260\n263"),
         }
     }
@@ -42,7 +42,7 @@ impl Assignment1 {
     }
 }
 
-impl Assignment for Assignment1 {
+impl Assignment for Solution {
     fn run(&self, input: String, is_debug: bool) -> (String, String) {
         let input = if is_debug {
             self.test_input.clone()
