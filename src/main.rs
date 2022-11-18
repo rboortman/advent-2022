@@ -4,6 +4,7 @@ use dotenv;
 use project_root;
 use reqwest::header::COOKIE;
 
+use advent_2022::Assignment;
 use assignment_1::Assignment1;
 
 #[tokio::main]
@@ -53,20 +54,23 @@ fn main() {
         .parse()
         .expect("No assignment number given!");
     let debug_case = match arguments.next() {
-        None => true,
-        _ => false,
+        None => false,
+        _ => true,
     };
 
     let input = get_input(&assignment);
     let result = match assignment {
         1 => {
             let ass = Assignment1::new();
-            ass.run()
+            ass.run(input, debug_case)
         }
-        _ => ("No answer found".to_owned(), "No answer found".to_owned()),
+        _ => (
+            String::from("No answer found"),
+            String::from("No answer found"),
+        ),
     };
     println!(
-        "---------\n| Silver | {}\n---------\n| Gold   | {}\n---------\n",
+        "----------\n| Silver | {}\n----------\n| Gold   | {}\n----------\n",
         result.0, result.1
     )
 }
