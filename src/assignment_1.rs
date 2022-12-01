@@ -7,38 +7,38 @@ pub struct Solution {
 impl Solution {
     pub fn new() -> Solution {
         Solution {
-            test_input: String::from("199\n200\n208\n210\n200\n207\n240\n269\n260\n263"),
+            test_input: String::from(
+                "1000\n2000\n3000\n\n4000\n\n5000\n6000\n\n7000\n8000\n9000\n\n10000\n",
+            ),
         }
     }
 
     fn parse_input(&self, input: String) -> Vec<i32> {
-        input.lines().map(|s| s.parse().unwrap()).collect()
+        let mut result = Vec::new();
+        let mut current = 0;
+        for line in input.lines() {
+            match line {
+                "" => {
+                    result.push(current);
+                    current = 0;
+                }
+                _ => current = current + line.parse::<i32>().unwrap(),
+            }
+        }
+        result.push(current);
+        result
     }
 
     fn silver(&self, input: &Vec<i32>) -> String {
-        let mut count = 0;
-        for (i, height) in input.iter().enumerate() {
-            if i == 0 {
-                continue;
-            }
-            if height > input.get(i - 1).unwrap() {
-                count = count + 1;
-            }
-        }
-        format!("{}", count)
+        let largest = input.iter().max().unwrap();
+        format!("{}", largest)
     }
 
     fn gold(&self, input: &Vec<i32>) -> String {
-        let mut count = 0;
-        for (i, height) in input.iter().enumerate() {
-            if i < 3 {
-                continue;
-            }
-            if height > input.get(i - 3).unwrap() {
-                count = count + 1;
-            }
-        }
-        format!("{}", count)
+        let mut clone_input = input.clone();
+        clone_input.sort();
+        clone_input.reverse();
+        format!("{}", &clone_input[..3].into_iter().sum::<i32>())
     }
 }
 
