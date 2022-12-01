@@ -13,12 +13,4 @@ fn main() {
         .expect("No assignment number given!");
 
     solve(assignment);
-
-    // let result: dyn Assignment = match assignment {
-    //     1 => assignment_1::Solution::new(),
-    //     3 => assignment_3::Solution::new(),
-    //     _ => panic!("Couldn't find solutions for day {assignment}"),
-    // };
-
-    // let (silver, gold) = result.run(input);
 }
