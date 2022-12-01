@@ -1,10 +1,7 @@
 mod assignment_1;
-mod assignment_2;
 
 use dotenv;
-use project_root;
-use reqwest::header::COOKIE;
-use reqwest::header::USER_AGENT;
+use reqwest::header::{COOKIE, USER_AGENT};
 
 use advent_2022::Assignment;
 
@@ -60,28 +57,20 @@ fn main() {
         .expect("No 'assignment' input found")
         .parse()
         .expect("No assignment number given!");
-    let debug_case = match arguments.next() {
-        None => false,
-        _ => true,
-    };
 
     let input = get_input(&assignment);
     let result = match assignment {
         1 => {
-            let sol = assignment_1::Solution::new();
-            sol.run(input, debug_case)
+            // let sol = assignment_1::Solution::new();
+            // sol.run(input)
+            assignment_1::Solution::new()
         }
-        2 => {
-            let sol = assignment_2::Solution::new();
-            sol.run(input, debug_case)
-        }
-        _ => (
-            String::from("No answer found"),
-            String::from("No answer found"),
-        ),
+        _ => panic!("Couldn't find solutions for day {assignment}"),
     };
+
+    let (silver, gold) = result.run(input);
     println!(
         "----------\n| Silver | {}\n----------\n| Gold   | {}\n----------\n",
-        result.0, result.1
+        silver, gold
     )
 }
