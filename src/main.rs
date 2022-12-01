@@ -4,6 +4,7 @@ mod assignment_2;
 use dotenv;
 use project_root;
 use reqwest::header::COOKIE;
+use reqwest::header::USER_AGENT;
 
 use advent_2022::Assignment;
 
@@ -22,12 +23,18 @@ async fn get_input(assignment_id: &u8) -> String {
             let client = reqwest::Client::new();
             let contents = client
                 .get(format!(
-                    "https://adventofcode.com/2021/day/{}/input",
+                    "https://adventofcode.com/2022/day/{}/input",
                     assignment_id
                 ))
                 .header(
                     COOKIE,
                     format!("session={}", dotenv::var("ADVENT_SESSION_KEY").unwrap()),
+                )
+                .header(
+                    USER_AGENT,
+                    String::from(
+                        "User-Agent: github.com/rboortman/advent-2022 by ron@techforce1.nl",
+                    ),
                 )
                 .send()
                 .await
