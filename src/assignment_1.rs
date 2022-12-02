@@ -12,7 +12,7 @@ impl Assignment for Solution {
     type Input = Vec<i32>;
     type Output = i32;
 
-    fn parse_input(&self, input: &String, _parse_gold: bool) -> Option<Self::Input> {
+    fn parse_input(&self, input: &String) -> Option<Self::Input> {
         let mut result = Vec::new();
         let mut current = 0;
         for line in input.lines() {
@@ -49,7 +49,7 @@ mod tests {
     #[test]
     fn test_silver() {
         let sol = Solution::new();
-        let input = sol.parse_input(&TEST_INPUT.to_owned(), false);
+        let input = sol.parse_input(&TEST_INPUT.to_owned());
         let result = sol.silver(&input.unwrap()).unwrap();
         assert_eq!(result, 24000)
     }
@@ -57,7 +57,7 @@ mod tests {
     #[test]
     fn test_gold() {
         let sol = Solution::new();
-        let input = sol.parse_input(&TEST_INPUT.to_owned(), true);
+        let input = sol.parse_input(&TEST_INPUT.to_owned());
         let result = sol.gold(&input.unwrap()).unwrap();
         assert_eq!(result, 45000)
     }

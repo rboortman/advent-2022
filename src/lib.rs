@@ -17,7 +17,7 @@ pub trait Assignment {
     type Input;
     type Output: Display;
 
-    fn parse_input(&self, input: &String, parse_gold: bool) -> Option<Self::Input>;
+    fn parse_input(&self, input: &String) -> Option<Self::Input>;
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output>;
     fn gold(&self, input: &Self::Input) -> Option<Self::Output>;
@@ -38,10 +38,10 @@ pub trait Assignment {
 
     fn run(&self, input: String) {
         let parsed_silver = self
-            .parse_input(&input, false)
+            .parse_input(&input)
             .expect("Could not parse silver input");
         let parsed_gold = self
-            .parse_input(&input, true)
+            .parse_input(&input)
             .expect("Could not parse gold input");
         let (silver_answer, silver_time) = self
             .timed_silver(&parsed_silver)

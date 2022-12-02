@@ -6,6 +6,12 @@ pub enum Played {
     Scissors,
 }
 
+pub enum Outcome {
+    Loss,
+    Draw,
+    Win,
+}
+
 pub struct Solution {}
 
 impl Solution {
@@ -14,39 +20,56 @@ impl Solution {
     }
 }
 
-fn translate_played(first: &Played, second: &Played) -> i32 {
-    let symbol_score = match second {
+fn translate_played(played: &Played) -> i32 {
+    match played {
         Played::Rock => 1,
         Played::Paper => 2,
         Played::Scissors => 3,
-    };
+    }
+}
+fn translate_outcome(outcome: &Outcome) -> i32 {
+    match outcome {
+        Outcome::Loss => 0,
+        Outcome::Draw => 3,
+        Outcome::Win => 6,
+    }
+}
 
-    let win_score = match first {
-        Played::Rock => match second {
-            Played::Rock => 3,
-            Played::Paper => 6,
-            Played::Scissors => 0,
-        },
-        Played::Paper => match second {
-            Played::Rock => 0,
-            Played::Paper => 3,
-            Played::Scissors => 6,
-        },
-        Played::Scissors => match second {
-            Played::Rock => 6,
-            Played::Paper => 0,
-            Played::Scissors => 3,
-        },
-    };
+fn translate_score(played: &Played, outcome: &Outcome) -> i32 {
+    translate_played(played) + translate_outcome(outcome)
+}
 
-    symbol_score + win_score
+fn get_outcome(first: &Played, second: &Played) -> Outcome {
+    match (first, second) {
+        (Played::Rock, Played::Scissors) => Outcome::Loss,
+        (Played::Rock, Played::Paper) => Outcome::Win,
+        (Played::Paper, Played::Rock) => Outcome::Loss,
+        (Played::Paper, Played::Scissors) => Outcome::Win,
+        (Played::Scissors, Played::Paper) => Outcome::Loss,
+        (Played::Scissors, Played::Rock) => Outcome::Win,
+        _ => Outcome::Draw,
+    }
+}
+
+fn get_played(first: &Played, outcome: &Outcome) -> Played {
+    match (first, outcome) {
+        (Played::Rock, Outcome::Loss) => Played::Scissors,
+        (Played::Rock, Outcome::Draw) => Played::Rock,
+        (Played::Rock, Outcome::Win) => Played::Paper,
+        (Played::Paper, Outcome::Loss) => Played::Rock,
+        (Played::Paper, Outcome::Draw) => Played::Paper,
+        (Played::Paper, Outcome::Win) => Played::Scissors,
+        (Played::Scissors, Outcome::Loss) => Played::Paper,
+        (Played::Scissors, Outcome::Draw) => Played::Scissors,
+        (Played::Scissors, Outcome::Win) => Played::Rock,
+    }
 }
 
 impl Assignment for Solution {
-    type Input = Vec<(Played, Played)>;
+    type Input = Vec<(Played, Played, Outcome)>;
     type Output = i32;
 
-    fn parse_input(&self, input: &String, parse_gold: bool) -> Option<Self::Input> {
+    fn parse_input(&self, input: &String) -> Option<Self::Input> {
         let mut result = Vec::new();
         for line in input.lines() {
             let (first, second) = line
@@ -60,45 +83,40 @@ impl Assignment for Solution {
                 s => panic!("Unknown symbol {s}"),
             };
             let second_played: Played;
-            if parse_gold {
-                second_played = match second {
-                    "X" => match first_played {
-                        Played::Rock => Played::Scissors,
-                        Played::Paper => Played::Rock,
-                        Played::Scissors => Played::Paper,
-                    },
-                    "Y" => match first_played {
-                        Played::Rock => Played::Rock,
-                        Played::Paper => Played::Paper,
-                        Played::Scissors => Played::Scissors,
-                    },
-                    "Z" => match first_played {
-                        Played::Rock => Played::Paper,
-                        Played::Paper => Played::Scissors,
-                        Played::Scissors => Played::Rock,
-                    },
-                    s => panic!("Unknown symbol {s}"),
-                };
-            } else {
-                second_played = match second {
-                    "X" => Played::Rock,
-                    "Y" => Played::Paper,
-                    "Z" => Played::Scissors,
-                    s => panic!("Unknown symbol {s}"),
-                };
-            }
+            second_played = match second {
+                "X" => Played::Rock,
+                "Y" => Played::Paper,
+                "Z" => Played::Scissors,
+                s => panic!("Unknown symbol {s}"),
+            };
+            let out = match second {
+                "X" => Outcome::Loss,
+                "Y" => Outcome::Draw,
+                "Z" => Outcome::Win,
+                s => panic!("Unknown symbol {s}"),
+            };
 
-            result.push((first_played, second_played));
+            result.push((first_played, second_played, out));
         }
         Some(result)
     }
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some(input.iter().map(|(a, b)| translate_played(a, b)).sum())
+        Some(
+            input
+                .iter()
+                .map(|(a, b, _outcome)| translate_score(b, &get_outcome(&a, &b)))
+                .sum(),
+        )
     }
 
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some(input.iter().map(|(a, b)| translate_played(a, b)).sum())
+        Some(
+            input
+                .iter()
+                .map(|(a, _b, outcome)| translate_score(&get_played(&a, &outcome), &outcome))
+                .sum(),
+        )
     }
 }
 
@@ -111,7 +129,7 @@ mod tests {
     #[test]
     fn test_silver() {
         let sol = Solution::new();
-        let input = sol.parse_input(&TEST_INPUT.to_owned(), false);
+        let input = sol.parse_input(&TEST_INPUT.to_owned());
         let result = sol.silver(&input.unwrap()).unwrap();
         assert_eq!(result, 15)
     }
@@ -119,7 +137,7 @@ mod tests {
     #[test]
     fn test_gold() {
         let sol = Solution::new();
-        let input = sol.parse_input(&TEST_INPUT.to_owned(), true);
+        let input = sol.parse_input(&TEST_INPUT.to_owned());
         let result = sol.gold(&input.unwrap()).unwrap();
         assert_eq!(result, 12)
     }
