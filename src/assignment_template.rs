@@ -10,9 +10,9 @@ impl Solution {
 
 impl Assignment for Solution {
     type Input = Vec<i32>;
-    type Output = String;
+    type Output = i32;
 
-    fn parse_input(&self, input: String) -> Option<Self::Input> {
+    fn parse_input(&self, input: String, parse_gold: bool) -> Option<Self::Input> {
         None
     }
 
@@ -34,16 +34,16 @@ mod tests {
     #[test]
     fn test_silver() {
         let sol = Solution::new();
-        let input = sol.parse_input(TEST_INPUT.to_owned());
+        let input = sol.parse_input(TEST_INPUT.to_owned(), false);
         let result = sol.silver(&input.unwrap()).unwrap();
-        assert_eq!(result, "todo")
+        assert_eq!(result, -1)
     }
 
     #[test]
     fn test_gold() {
         let sol = Solution::new();
-        let input = sol.parse_input(TEST_INPUT.to_owned());
+        let input = sol.parse_input(TEST_INPUT.to_owned(), true);
         let result = sol.gold(&input.unwrap()).unwrap();
-        assert_eq!(result, "todo")
+        assert_eq!(result, -1)
     }
 }

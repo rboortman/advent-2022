@@ -1,4 +1,5 @@
 mod assignment_1;
+mod assignment_2;
 
 use reqwest::header::{COOKIE, USER_AGENT};
 use std::{fmt::Display, time::Instant};
@@ -7,6 +8,7 @@ pub fn solve(day: u8) {
     let raw_input = get_input(&day);
     match day {
         1 => assignment_1::Solution::new().run(raw_input),
+        2 => assignment_2::Solution::new().run(raw_input),
         d => println!("Day {} has not been solved yet", d),
     }
 }
@@ -15,7 +17,7 @@ pub trait Assignment {
     type Input;
     type Output: Display;
 
-    fn parse_input(&self, input: String) -> Option<Self::Input>;
+    fn parse_input(&self, input: &String, parse_gold: bool) -> Option<Self::Input>;
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output>;
     fn gold(&self, input: &Self::Input) -> Option<Self::Output>;
@@ -35,11 +37,18 @@ pub trait Assignment {
     }
 
     fn run(&self, input: String) {
-        let parsed = self.parse_input(input).expect("Could not parse input");
+        let parsed_silver = self
+            .parse_input(&input, false)
+            .expect("Could not parse silver input");
+        let parsed_gold = self
+            .parse_input(&input, true)
+            .expect("Could not parse gold input");
         let (silver_answer, silver_time) = self
-            .timed_silver(&parsed)
+            .timed_silver(&parsed_silver)
             .expect("Error while solving silver");
-        let (gold_answer, gold_time) = self.timed_gold(&parsed).expect("Error while solving gold");
+        let (gold_answer, gold_time) = self
+            .timed_gold(&parsed_gold)
+            .expect("Error while solving gold");
         println!(
             "----------\n| Silver | {} ({} µs)\n----------\n| Gold   | {} ({} µs)\n----------\n",
             silver_answer, silver_time, gold_answer, gold_time
