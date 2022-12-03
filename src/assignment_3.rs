@@ -34,12 +34,8 @@ impl Bag {
 
     fn both_sides(&self) -> i32 {
         let mut index = -1;
-        for (i, c) in self.left.iter().enumerate() {
-            if c <= &0 {
-                continue;
-            } else if self.right[i] <= 0 {
-                continue;
-            } else {
+        for (i, _) in self.left.iter().enumerate() {
+            if self.has_item_left(i) && self.has_item_right(i) {
                 index = i as i32;
                 break;
             }
@@ -47,16 +43,32 @@ impl Bag {
         index + 1
     }
 
-    fn has_item(&self, index: usize) -> bool {
-        self.left[index] > 0 || self.right[index] > 0
+    fn has_item_left(&self, index: usize) -> bool {
+        self.left[index] > 0
     }
 
-    fn get_group_badge(&self, b1: &Bag, b2: &Bag) -> i32 {
+    fn has_item_right(&self, index: usize) -> bool {
+        self.right[index] > 0
+    }
+
+    fn has_item(&self, index: usize) -> bool {
+        self.has_item_left(index) || self.has_item_right(index)
+    }
+
+    fn get_group_badge(&self, others: &[&Bag]) -> i32 {
         let mut index = -1;
         for (i, _) in self.left.iter().enumerate() {
-            if self.has_item(i) && b1.has_item(i) && b2.has_item(i) {
+            if self.has_item(i) && others.iter().all(|b| b.has_item(i)) {
                 index = i as i32;
                 break;
+            }
+        }
+        if index < 0 {
+            for (i, _) in self.right.iter().enumerate() {
+                if self.has_item(i) && others.iter().all(|b| b.has_item(i)) {
+                    index = i as i32;
+                    break;
+                }
             }
         }
         index + 1
@@ -84,18 +96,16 @@ impl Assignment for Solution {
     }
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some(input.iter().map(|bag| bag.both_sides()).sum::<i32>())
+        Some(input.iter().map(Bag::both_sides).sum())
     }
 
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
-        let mut result = 0;
-        for i in 0..(input.len() / 3) {
-            result += input
-                .get(i * 3)
-                .unwrap()
-                .get_group_badge(input.get(i * 3 + 1).unwrap(), input.get(i * 3 + 2).unwrap());
-        }
-        Some(result)
+        Some(
+            input
+                .chunks(3)
+                .map(|bags| bags[0].get_group_badge(&[&bags[1], &bags[2]]))
+                .sum(),
+        )
     }
 }
 
