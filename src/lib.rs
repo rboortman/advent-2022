@@ -1,6 +1,7 @@
 mod assignment_1;
 mod assignment_2;
 mod assignment_3;
+mod assignment_4;
 
 use reqwest::header::{COOKIE, USER_AGENT};
 use std::{fmt::Display, time::Instant};
@@ -11,6 +12,7 @@ pub fn solve(day: u8) {
         1 => assignment_1::Solution::new().run(raw_input),
         2 => assignment_2::Solution::new().run(raw_input),
         3 => assignment_3::Solution::new().run(raw_input),
+        4 => assignment_4::Solution::new().run(raw_input),
         d => println!("Day {} has not been solved yet", d),
     }
 }
