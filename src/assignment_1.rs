@@ -1,4 +1,4 @@
-use crate::Assignment;
+use crate::{Assignment, Output};
 
 pub struct Solution {}
 
@@ -10,7 +10,7 @@ impl Solution {
 
 impl Assignment for Solution {
     type Input = Vec<i32>;
-    type Output = i32;
+    type Output = Output;
 
     fn parse_input(&self, input: &String) -> Option<Self::Input> {
         let mut result = Vec::new();
@@ -29,13 +29,13 @@ impl Assignment for Solution {
     }
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some(input.iter().max().unwrap().to_owned())
+        Some(input.iter().max().unwrap().to_owned().into())
     }
 
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
         let mut clone_input = input.clone();
         clone_input.sort();
-        Some(clone_input.iter().rev().take(3).sum::<i32>())
+        Some(clone_input.iter().rev().take(3).sum::<i32>().into())
     }
 }
 

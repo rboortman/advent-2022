@@ -1,4 +1,4 @@
-use crate::Assignment;
+use crate::{Assignment, Output};
 
 pub struct Solution {}
 
@@ -10,7 +10,7 @@ impl Solution {
 
 impl Assignment for Solution {
     type Input = Vec<i32>;
-    type Output = i32;
+    type Output = Output;
 
     fn parse_input(&self, input: &String) -> Option<Self::Input> {
         None

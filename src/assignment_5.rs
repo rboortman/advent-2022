@@ -1,7 +1,7 @@
 use regex::Regex;
 use std::collections::VecDeque;
 
-use crate::Assignment;
+use crate::{Assignment, Output};
 
 #[derive(Debug, Clone)]
 pub struct Crate {
@@ -37,7 +37,7 @@ impl Solution {
 
 impl Assignment for Solution {
     type Input = (VecDeque<VecDeque<Crate>>, VecDeque<Instruction>);
-    type Output = String;
+    type Output = Output;
 
     fn parse_input(&self, input: &String) -> Option<Self::Input> {
         let mut stacks = VecDeque::new();
@@ -87,12 +87,11 @@ impl Assignment for Solution {
             }
         }
 
-        Some(
-            stacks
-                .iter()
-                .map(|stack| stack.back().unwrap().id)
-                .collect(),
-        )
+        let result = stacks
+            .iter()
+            .map(|stack| stack.back().unwrap().id)
+            .collect::<String>();
+        Some(result.into())
     }
 
     fn gold(&self, (s, instructions): &Self::Input) -> Option<Self::Output> {
@@ -104,12 +103,11 @@ impl Assignment for Solution {
             stacks[instruction.to].append(&mut crates);
         }
 
-        Some(
-            stacks
-                .iter()
-                .map(|stack| stack.back().unwrap().id)
-                .collect(),
-        )
+        let result = stacks
+            .iter()
+            .map(|stack| stack.back().unwrap().id)
+            .collect::<String>();
+        Some(result.into())
     }
 }
 

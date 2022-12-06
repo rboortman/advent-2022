@@ -1,4 +1,4 @@
-use crate::Assignment;
+use crate::{Assignment, Output};
 
 #[derive(Debug)]
 pub struct Elf {
@@ -32,7 +32,7 @@ impl Solution {
 
 impl Assignment for Solution {
     type Input = Vec<(Elf, Elf)>;
-    type Output = i32;
+    type Output = Output;
 
     fn parse_input(&self, input: &String) -> Option<Self::Input> {
         let mut result = Vec::new();
@@ -51,21 +51,21 @@ impl Assignment for Solution {
     }
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some(
-            input
-                .iter()
-                .map(|(first, second)| first.is_engulfed(second) || second.is_engulfed(first))
-                .fold(0, |acc, b| if b { acc + 1 } else { acc }),
-        )
+        let result = input
+            .iter()
+            .map(|(first, second)| first.is_engulfed(second) || second.is_engulfed(first))
+            .filter(|b| *b)
+            .count() as i32;
+        Some(result.into())
     }
 
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some(
-            input
-                .iter()
-                .map(|(first, second)| first.overlaps(second))
-                .fold(0, |acc, b| if b { acc + 1 } else { acc }),
-        )
+        let result = input
+            .iter()
+            .map(|(first, second)| first.overlaps(second))
+            .filter(|b| *b)
+            .count() as i32;
+        Some(result.into())
     }
 }
 

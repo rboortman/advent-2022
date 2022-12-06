@@ -1,4 +1,4 @@
-use crate::Assignment;
+use crate::{Assignment, Output};
 
 #[derive(Debug)]
 pub struct Bag {
@@ -85,7 +85,7 @@ impl Solution {
 
 impl Assignment for Solution {
     type Input = Vec<Bag>;
-    type Output = i32;
+    type Output = Output;
 
     fn parse_input(&self, input: &String) -> Option<Self::Input> {
         let mut result = Vec::new();
@@ -96,7 +96,7 @@ impl Assignment for Solution {
     }
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some(input.iter().map(Bag::both_sides).sum())
+        Some(input.iter().map(Bag::both_sides).sum::<i32>().into())
     }
 
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
@@ -104,7 +104,8 @@ impl Assignment for Solution {
             input
                 .chunks(3)
                 .map(|bags| bags[0].get_group_badge(&[&bags[1], &bags[2]]))
-                .sum(),
+                .sum::<i32>()
+                .into(),
         )
     }
 }

@@ -1,4 +1,4 @@
-use crate::Assignment;
+use crate::{Assignment, Output};
 
 pub enum Played {
     Rock,
@@ -67,7 +67,7 @@ fn get_played(first: &Played, outcome: &Outcome) -> Played {
 
 impl Assignment for Solution {
     type Input = Vec<(Played, Played, Outcome)>;
-    type Output = i32;
+    type Output = Output;
 
     fn parse_input(&self, input: &String) -> Option<Self::Input> {
         let mut result = Vec::new();
@@ -106,7 +106,8 @@ impl Assignment for Solution {
             input
                 .iter()
                 .map(|(a, b, _outcome)| translate_score(b, &get_outcome(&a, &b)))
-                .sum(),
+                .sum::<i32>()
+                .into(),
         )
     }
 
@@ -115,7 +116,8 @@ impl Assignment for Solution {
             input
                 .iter()
                 .map(|(a, _b, outcome)| translate_score(&get_played(&a, &outcome), &outcome))
-                .sum(),
+                .sum::<i32>()
+                .into(),
         )
     }
 }
