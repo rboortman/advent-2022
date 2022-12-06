@@ -17,11 +17,11 @@ impl Assignment for Solution {
     }
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some(-1)
+        Some((-1).into())
     }
 
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some(-1)
+        Some((-1).into())
     }
 }
 

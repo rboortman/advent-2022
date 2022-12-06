@@ -3,6 +3,7 @@ mod assignment_2;
 mod assignment_3;
 mod assignment_4;
 mod assignment_5;
+mod assignment_6;
 
 use reqwest::header::{COOKIE, USER_AGENT};
 use std::{
@@ -21,6 +22,7 @@ pub fn solve(day: u8) {
         3 => assignment_3::Solution::new().run(raw_input),
         4 => assignment_4::Solution::new().run(raw_input),
         5 => assignment_5::Solution::new().run(raw_input),
+        6 => assignment_6::Solution::new().run(raw_input),
         d => panic!("Day {} has not been solved yet", d),
     };
 
@@ -143,9 +145,14 @@ async fn send_answer(day: u8, level: u8, answer: Output) {
     params.insert("level", format!("{}", level));
     params.insert("answer", format!("{}", answer));
 
-    let client = reqwest::Client::new();
-    let contents = client
-        .post(format!("https://adventofcode.com/2022/day/{}/input", day))
+    // let contents = std::fs::read_to_string("./src/temp.html").unwrap();
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .unwrap();
+    // let client = reqwest::Client::new();
+    let response = client
+        .post(format!("https://adventofcode.com/2022/day/{}/answer", day))
         .json(&params)
         .header(
             COOKIE,
@@ -157,18 +164,21 @@ async fn send_answer(day: u8, level: u8, answer: Output) {
         )
         .send()
         .await
-        .unwrap()
-        .text()
-        .await
         .unwrap();
+
+    if response.status().as_u16() == 302 {
+        println!("Answer was already submitted!");
+        std::process::exit(0);
+    }
+
+    let contents = response.text().await.unwrap();
+
+    // println!("{}", contents);
 
     let document = scraper::Html::parse_document(contents.as_str());
     let selector = scraper::Selector::parse("article").unwrap();
 
-    let article = document.select(&selector).next().unwrap_or_else(|| {
-        println!("Answer was already submitted!");
-        std::process::exit(0);
-    });
+    let article = document.select(&selector).next().unwrap();
 
     let response = article
         .text()
