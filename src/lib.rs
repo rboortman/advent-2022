@@ -4,6 +4,7 @@ mod assignment_3;
 mod assignment_4;
 mod assignment_5;
 mod assignment_6;
+mod assignment_7;
 
 use reqwest::header::{COOKIE, USER_AGENT};
 use std::{
@@ -23,6 +24,7 @@ pub fn solve(day: u8) {
         4 => assignment_4::Solution::new().run(raw_input),
         5 => assignment_5::Solution::new().run(raw_input),
         6 => assignment_6::Solution::new().run(raw_input),
+        7 => assignment_7::Solution::new().run(raw_input),
         d => panic!("Day {} has not been solved yet", d),
     };
 
