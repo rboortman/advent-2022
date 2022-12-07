@@ -70,9 +70,19 @@ impl Directory {
 
         sizes
     }
+
+    fn get_all_dir_sizes(&self) -> Vec<(String, i32)> {
+        let mut result = Vec::new();
+        result.push((self.name.clone(), self.get_total_size()));
+        for d in self.subdirectories.clone() {
+            result.append(&mut d.get_all_dir_sizes());
+        }
+        result
+    }
 }
 
-#[derive(Debug, Clone)]
+#[allow(dead_code)]
+#[derive(Clone, Debug)]
 pub struct File {
     name: String,
     size: i32,
@@ -191,8 +201,22 @@ impl Assignment for Solution {
         )
     }
 
-    fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some((-1).into())
+    fn gold(&self, root: &Self::Input) -> Option<Self::Output> {
+        let max_size = 70_000_000;
+        let to_free = 30_000_000;
+        let total_used = root.get_total_size();
+        let minimal_removal = total_used - max_size + to_free;
+        let mut sizes = root.get_all_dir_sizes();
+
+        sizes.sort_by(|a, b| a.1.cmp(&b.1));
+        let to_remove = sizes
+            .into_iter()
+            .filter(|(_, s)| s >= &minimal_removal)
+            .next()
+            .unwrap();
+
+        println!("{:?}", to_remove);
+        Some((to_remove.1).into())
     }
 }
 
