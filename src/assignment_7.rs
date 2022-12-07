@@ -6,7 +6,6 @@ pub struct Directory {
     name: String,
     files: Vec<File>,
     subdirectories: Vec<Directory>,
-    parent: Box<Option<Directory>>,
 }
 
 impl Directory {
@@ -15,74 +14,61 @@ impl Directory {
             name,
             files: Vec::new(),
             subdirectories: Vec::new(),
-            parent: Box::new(None),
         }
     }
 
-    fn add_file(&mut self, f: File) {
-        self.files.push(f);
-    }
+    fn add_file(&mut self, f: File, path: &VecDeque<String>) {
+        if path.len() < 1 {
+            self.files.push(f);
+        } else {
+            let mut cloned_path = path.clone();
+            let next_dir = cloned_path.pop_front().unwrap();
 
-    fn add_directory(&mut self, d: Directory) {
-        self.subdirectories.push(d);
-    }
-
-    fn add_parent(&mut self, d: Directory) {
-        self.parent = Box::new(Some(d));
-    }
-
-    fn get_parent(&self) -> Option<Directory> {
-        *self.parent.clone()
-    }
-
-    fn get_root_dir(&self) -> &Directory {
-        match *self.parent.clone() {
-            Some(_) => self.get_root_dir(),
-            None => self,
-        }
-    }
-
-    fn has_dir(&self, name: String) -> Option<Directory> {
-        for dir in self.subdirectories.clone() {
-            if dir.name == name {
-                return Some(dir);
-            }
-        }
-        None
-    }
-
-    fn parse_operations(&mut self, operations: &mut VecDeque<Operation>) -> &mut Directory {
-        let mut op = operations.pop_front().unwrap();
-
-        match op.input {
-            Command::Cd(name) => {
-                let mut dir = if name == String::from("..") {
-                    self.get_parent().unwrap()
-                } else {
-                    self.has_dir(name).unwrap()
-                };
-                dir.parse_operations(operations);
-            }
-            Command::Ls => {
-                for line in op.output {
-                    let words: Vec<&str> = line.split(' ').collect();
-                    match words.get(0) {
-                        Some(&"dir") => {
-                            let mut new_dir = Directory::new(words.get(1).unwrap().to_string());
-                            new_dir.add_parent(self.clone());
-                            self.add_directory(new_dir)
-                        }
-                        _ => {
-                            let size: i32 = words.get(0).unwrap().parse().unwrap();
-                            self.add_file(File::new(words.get(1).unwrap().to_string(), size));
-                        }
-                    }
+            for dir in &mut self.subdirectories {
+                if dir.name == next_dir {
+                    dir.add_file(f.clone(), &cloned_path);
                 }
-                println!("Test");
             }
         }
+    }
 
-        self
+    fn add_directory(&mut self, d: Directory, path: &VecDeque<String>) {
+        if path.len() < 1 {
+            self.subdirectories.push(d);
+        } else {
+            let mut cloned_path = path.clone();
+            let next_dir = cloned_path.pop_front().unwrap();
+
+            for dir in &mut self.subdirectories {
+                if dir.name == next_dir {
+                    dir.add_directory(d.clone(), &cloned_path);
+                }
+            }
+        }
+    }
+
+    fn get_total_size(&self) -> i32 {
+        let mut size = 0;
+        size += self.files.iter().fold(0, |acc, f| acc + f.size);
+        size += self
+            .subdirectories
+            .iter()
+            .fold(0, |acc, d| acc + d.get_total_size());
+        size
+    }
+
+    fn find_dir_with_lower_size(&self, size: i32) -> Vec<i32> {
+        let mut sizes = Vec::new();
+        let self_size = self.get_total_size();
+        if self_size < size {
+            sizes.push(self_size);
+        }
+
+        for d in self.subdirectories.clone() {
+            sizes.append(&mut d.find_dir_with_lower_size(size));
+        }
+
+        sizes
     }
 }
 
@@ -157,36 +143,52 @@ impl Assignment for Solution {
                 _ => current_operation.add_output(line.to_string()),
             }
         }
-
+        operations.push_back(current_operation);
         operations.remove(0);
 
-        println!("{:?}", operations);
-
         let mut root = Directory::new(String::from("/"));
-        root.parse_operations(&mut operations);
-        println!("{:?}", root);
+        let mut current_dir: VecDeque<String> = VecDeque::new();
+
+        for op in operations {
+            match op.input {
+                Command::Ls => {
+                    for line in op.output {
+                        let words: Vec<&str> = line.split(' ').collect();
+                        let name = words.get(1).unwrap().to_string();
+                        match words.get(0) {
+                            Some(&"dir") => {
+                                let new_dir = Directory::new(name);
+                                root.add_directory(new_dir, &current_dir);
+                                // self.add_directory(new_dir)
+                            }
+                            _ => {
+                                let size: i32 = words.get(0).unwrap().parse().unwrap();
+                                root.add_file(File::new(name, size), &current_dir);
+                            }
+                        }
+                    }
+                }
+                Command::Cd(name) => match name.as_str() {
+                    ".." => {
+                        current_dir.pop_back();
+                    }
+                    _ => {
+                        current_dir.push_back(name);
+                    }
+                },
+            }
+        }
+
         Some(root)
-
-        // for line in input.lines() {
-        //     let words: Vec<&str> = line.split(' ').collect();
-        //     match words.get(0) {
-        //         Some(&"$") => match words.get(1) {
-        //             Some(&"ls") => continue,
-        //             Some(&"cd") => {
-        //                 let mut dir = current_dir
-        //                     .has_dir(words.get(2).unwrap().to_string())
-        //                     .unwrap();
-        //             }
-        //             _ => panic!("Had a problem parsing '{}'", line),
-        //         },
-        //     }
-        // }
-
-        // Some(root)
     }
 
-    fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some((-1).into())
+    fn silver(&self, root: &Self::Input) -> Option<Self::Output> {
+        Some(
+            root.find_dir_with_lower_size(100000)
+                .into_iter()
+                .fold(0, |acc, s| acc + s)
+                .into(),
+        )
     }
 
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
@@ -213,6 +215,6 @@ mod tests {
         let sol = Solution::new();
         let input = sol.parse_input(&TEST_INPUT.to_owned());
         let result = sol.gold(&input.unwrap()).unwrap();
-        assert_eq!(result, -1)
+        assert_eq!(result, 24933642)
     }
 }
