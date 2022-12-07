@@ -6,9 +6,12 @@ mod assignment_5;
 mod assignment_6;
 mod assignment_7;
 
-use reqwest::header::{COOKIE, USER_AGENT};
+use reqwest::{
+    header::{HeaderMap, HeaderValue, CONTENT_TYPE, COOKIE, USER_AGENT},
+    redirect::Policy,
+    Client,
+};
 use std::{
-    collections::HashMap,
     fmt::{Display, Formatter, Result as DisplayResult},
     io,
     time::Instant,
@@ -98,6 +101,25 @@ pub trait Assignment {
     }
 }
 
+fn build_client(session_cookie: &str, content_type: &str) -> Result<Client, String> {
+    let cookie_header = HeaderValue::from_str(&format!("session={}", session_cookie.trim()))
+        .map_err(|err| format!("Invalid session cookie: {}", err))?;
+    let content_type_header = HeaderValue::from_str(content_type).unwrap();
+    let user_agent = format!("User-Agent: github.com/rboortman/advent-2022 by ron@techforce1.nl");
+    let user_agent_header = HeaderValue::from_str(&user_agent).unwrap();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(COOKIE, cookie_header);
+    headers.insert(CONTENT_TYPE, content_type_header);
+    headers.insert(USER_AGENT, user_agent_header);
+
+    Client::builder()
+        .default_headers(headers)
+        .redirect(Policy::none())
+        .build()
+        .map_err(|err| err.to_string())
+}
+
 #[tokio::main]
 async fn get_input(assignment_id: &u8) -> String {
     let mut data_location = project_root::get_project_root().unwrap();
@@ -110,22 +132,18 @@ async fn get_input(assignment_id: &u8) -> String {
     let contents = match std::fs::read_to_string(&data_location) {
         Ok(c) => c,
         Err(_) => {
-            let client = reqwest::Client::new();
+            let client = build_client(
+                dotenv::var("ADVENT_SESSION_KEY").unwrap().as_str(),
+                "text/plain",
+            )
+            .unwrap();
+
+            // let client = reqwest::Client::new();
             let contents = client
                 .get(format!(
                     "https://adventofcode.com/2022/day/{}/input",
                     assignment_id
                 ))
-                .header(
-                    COOKIE,
-                    format!("session={}", dotenv::var("ADVENT_SESSION_KEY").unwrap()),
-                )
-                .header(
-                    USER_AGENT,
-                    String::from(
-                        "User-Agent: github.com/rboortman/advent-2022 by ron@techforce1.nl",
-                    ),
-                )
                 .send()
                 .await
                 .unwrap()
@@ -143,19 +161,16 @@ async fn get_input(assignment_id: &u8) -> String {
 
 #[tokio::main]
 async fn send_answer(day: u8, level: u8, answer: Output) {
-    let mut params = HashMap::new();
-    params.insert("level", format!("{}", level));
-    params.insert("answer", format!("{}", answer));
-
     // let contents = std::fs::read_to_string("./src/temp.html").unwrap();
-    let client = reqwest::Client::builder()
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .unwrap();
+    let client = build_client(
+        dotenv::var("ADVENT_SESSION_KEY").unwrap().as_str(),
+        "application/x-www-form-urlencoded",
+    )
+    .unwrap();
     // let client = reqwest::Client::new();
     let response = client
         .post(format!("https://adventofcode.com/2022/day/{}/answer", day))
-        .json(&params)
+        .body(format!("level={}&answer={}", level, answer))
         .header(
             COOKIE,
             format!("session={}", dotenv::var("ADVENT_SESSION_KEY").unwrap()),
@@ -168,14 +183,13 @@ async fn send_answer(day: u8, level: u8, answer: Output) {
         .await
         .unwrap();
 
+    // println!("{:?}", response.headers());
     if response.status().as_u16() == 302 {
         println!("Answer was already submitted!");
         std::process::exit(0);
     }
 
     let contents = response.text().await.unwrap();
-
-    // println!("{}", contents);
 
     let document = scraper::Html::parse_document(contents.as_str());
     let selector = scraper::Selector::parse("article").unwrap();
