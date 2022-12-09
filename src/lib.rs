@@ -6,6 +6,7 @@ mod assignment_5;
 mod assignment_6;
 mod assignment_7;
 mod assignment_8;
+mod assignment_9;
 
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_TYPE, COOKIE, USER_AGENT},
@@ -30,6 +31,7 @@ pub fn solve(day: u8) {
         6 => assignment_6::Solution::new().run(raw_input),
         7 => assignment_7::Solution::new().run(raw_input),
         8 => assignment_8::Solution::new().run(raw_input),
+        9 => assignment_9::Solution::new().run(raw_input),
         d => panic!("Day {} has not been solved yet", d),
     };
 
