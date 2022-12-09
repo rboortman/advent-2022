@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 use std::hash::Hash;
 use std::ops::Add;
+use std::{collections::HashSet, str::FromStr};
 
 use crate::{Assignment, Output};
 
@@ -11,15 +11,30 @@ pub enum Direction {
     Left(i32),
 }
 
-impl From<(&str, &str)> for Direction {
-    fn from(tup: (&str, &str)) -> Self {
-        let speed = tup.1.parse::<i32>().unwrap_or(0);
-        match tup.0 {
-            "U" => Direction::Up(speed),
-            "R" => Direction::Right(speed),
-            "D" => Direction::Down(speed),
-            "L" => Direction::Left(speed),
-            _ => Direction::Up(0),
+impl FromStr for Direction {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (direction, magnitude) = s.split_once(' ').unwrap();
+        let magnitude = magnitude.parse::<i32>().unwrap();
+
+        match direction {
+            "L" => Ok(Direction::Left(magnitude)),
+            "R" => Ok(Direction::Right(magnitude)),
+            "U" => Ok(Direction::Up(magnitude)),
+            "D" => Ok(Direction::Down(magnitude)),
+            _ => Err(format!("unknown direction {}", direction)),
+        }
+    }
+}
+
+impl Into<(Coord, i32)> for &Direction {
+    fn into(self) -> (Coord, i32) {
+        match self {
+            Direction::Left(times) => (Coord::new(-1, 0), *times),
+            Direction::Right(times) => (Coord::new(1, 0), *times),
+            Direction::Up(times) => (Coord::new(0, 1), *times),
+            Direction::Down(times) => (Coord::new(0, -1), *times),
         }
     }
 }
@@ -68,75 +83,40 @@ impl Solution {
     }
 }
 
+fn calculate_knot_movement(input: &Vec<Direction>, knot_size: usize) -> usize {
+    let mut set = HashSet::new();
+    let mut knots = vec![Coord::new(0, 0); knot_size];
+
+    for dir in input {
+        let (change_vector, times) = dir.into();
+
+        for _ in 0..times {
+            let mut new_knots = vec![knots.get(0).unwrap().clone() + change_vector];
+            for (i, knot) in knots.into_iter().enumerate().skip(1) {
+                new_knots.push(knot.move_towards(&new_knots[i - 1]))
+            }
+            knots = new_knots;
+            set.insert(knots.get(knots.len() - 1).unwrap().clone());
+        }
+    }
+
+    set.len()
+}
+
 impl Assignment for Solution {
     type Input = Vec<Direction>;
     type Output = Output;
 
     fn parse_input(&self, input: &String) -> Option<Self::Input> {
-        Some(
-            input
-                .lines()
-                .map(|l| Direction::from(l.split_once(' ').unwrap()))
-                .collect(),
-        )
+        Some(input.lines().map(|l| l.parse().unwrap()).collect())
     }
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
-        let mut set = HashSet::new();
-        let mut knots = vec![Coord::new(0, 0); 2];
-
-        for dir in input {
-            let (change_vector, times) = match dir {
-                Direction::Up(t) => (Coord::new(1, 0), t.to_owned()),
-                Direction::Right(t) => (Coord::new(0, 1), t.to_owned()),
-                Direction::Down(t) => (Coord::new(-1, 0), t.to_owned()),
-                Direction::Left(t) => (Coord::new(0, -1), t.to_owned()),
-            };
-
-            for _ in 0..times {
-                let mut new_knots = Vec::new();
-                for (i, knot) in knots.into_iter().enumerate() {
-                    if i == 0 {
-                        new_knots.push(knot + change_vector);
-                    } else {
-                        new_knots.push(knot.move_towards(&new_knots[i - 1]))
-                    }
-                }
-                knots = new_knots;
-                set.insert(knots.get(knots.len() - 1).unwrap().clone());
-            }
-        }
-
-        Some((set.len() as i32).into())
+        Some((calculate_knot_movement(input, 2) as i32).into())
     }
 
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
-        let mut set = HashSet::new();
-        let mut knots = vec![Coord::new(0, 0); 10];
-
-        for dir in input {
-            let (change_vector, times) = match dir {
-                Direction::Up(t) => (Coord::new(1, 0), t.to_owned()),
-                Direction::Right(t) => (Coord::new(0, 1), t.to_owned()),
-                Direction::Down(t) => (Coord::new(-1, 0), t.to_owned()),
-                Direction::Left(t) => (Coord::new(0, -1), t.to_owned()),
-            };
-
-            for _ in 0..times {
-                let mut new_knots = Vec::new();
-                for (i, knot) in knots.into_iter().enumerate() {
-                    if i == 0 {
-                        new_knots.push(knot + change_vector);
-                    } else {
-                        new_knots.push(knot.move_towards(&new_knots[i - 1]))
-                    }
-                }
-                knots = new_knots;
-                set.insert(knots.get(knots.len() - 1).unwrap().clone());
-            }
-        }
-
-        Some((set.len() as i32).into())
+        Some((calculate_knot_movement(input, 10) as i32).into())
     }
 }
 
