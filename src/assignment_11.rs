@@ -24,6 +24,7 @@ impl Monkey {
     fn exec_cycle(
         &self,
         other_items: &mut Vec<u128>,
+        product: u128,
         is_worried: &bool,
     ) -> (Monkey, usize, Vec<(usize, u128)>) {
         let mut cloned_items = self.items.clone();
@@ -33,8 +34,6 @@ impl Monkey {
         let result = cloned_items
             .into_iter()
             .map(|item| {
-                println!("{}", item);
-
                 let mut new_item_value = match self.operation {
                     MonkeyOperators::Add(digit) => item + digit,
                     MonkeyOperators::Multiplication(digit) => item * digit,
@@ -44,6 +43,8 @@ impl Monkey {
                 if !is_worried {
                     new_item_value = new_item_value / 3;
                 }
+
+                new_item_value = new_item_value % product;
 
                 let tested_value = new_item_value / self.test_division;
                 let new_monkey = if tested_value * self.test_division == new_item_value {
@@ -128,6 +129,7 @@ fn throw_items(monkeys: Vec<Monkey>, is_worried: &bool) -> (Vec<Monkey>, Vec<usi
     let mut new_monkeys = Vec::new();
     let mut new_items: Vec<(usize, u128)> = Vec::new();
 
+    let product: u128 = monkeys.iter().map(|m| m.test_division).product();
     let mut total_inspected = vec![0; monkeys.len()];
 
     for (i, monkey) in monkeys.into_iter().enumerate() {
@@ -138,7 +140,8 @@ fn throw_items(monkeys: Vec<Monkey>, is_worried: &bool) -> (Vec<Monkey>, Vec<usi
             .map(|(_, item)| item)
             .collect::<Vec<u128>>();
 
-        let (new_monkey, inspected, items) = monkey.exec_cycle(&mut items_thrown_now, is_worried);
+        let (new_monkey, inspected, items) =
+            monkey.exec_cycle(&mut items_thrown_now, product, is_worried);
         new_monkeys.push(new_monkey);
         total_inspected[i] += inspected;
 
@@ -185,8 +188,6 @@ impl Assignment for Solution {
             for (j, insp) in new_inspected.into_iter().enumerate() {
                 inspected[j] += insp;
             }
-
-            // println!("{:?}", cloned_input);
         }
 
         inspected.sort();
@@ -207,18 +208,12 @@ impl Assignment for Solution {
         let mut inspected = vec![0; cloned_input.len()];
 
         for i in 0..10_000 {
-            if i % 1 == 0 {
-                println!("parsing cycle {}", i);
-            }
-
             let (new_monkeys, new_inspected) = throw_items(cloned_input, &true);
             cloned_input = new_monkeys;
 
             for (j, insp) in new_inspected.into_iter().enumerate() {
                 inspected[j] += insp;
             }
-
-            // println!("{:?}", cloned_input);
         }
 
         inspected.sort();
@@ -228,8 +223,8 @@ impl Assignment for Solution {
             (inspected
                 .into_iter()
                 .take(2)
-                .map(|i| i as u32)
-                .product::<u32>())
+                .map(|i| i as u128)
+                .product::<u128>())
             .into(),
         )
     }
