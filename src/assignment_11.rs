@@ -15,28 +15,41 @@ enum MonkeyOperators {
 pub struct Monkey {
     items: Vec<u128>,
     operation: MonkeyOperators,
-    TestDivision: u128,
-    FalseMonkey: usize,
-    TrueMonkey: usize,
+    test_division: u128,
+    false_monkey: usize,
+    true_monkey: usize,
 }
 
 impl Monkey {
-    fn exec_cycle(&self) -> (Monkey, Vec<(usize, u128)>) {
-        let result = self
-            .items
-            .clone()
+    fn exec_cycle(
+        &self,
+        other_items: &mut Vec<u128>,
+        is_worried: &bool,
+    ) -> (Monkey, usize, Vec<(usize, u128)>) {
+        let mut cloned_items = self.items.clone();
+        cloned_items.append(other_items);
+        let len = cloned_items.len();
+
+        let result = cloned_items
             .into_iter()
             .map(|item| {
-                let new_item_value = match self.operation {
-                    MonkeyOperators::Add(digit) => (item + digit) / 3,
-                    MonkeyOperators::Multiplication(digit) => (item * digit) / 3,
-                    MonkeyOperators::MultiplicationSelf => (item * item) / 3,
+                println!("{}", item);
+
+                let mut new_item_value = match self.operation {
+                    MonkeyOperators::Add(digit) => item + digit,
+                    MonkeyOperators::Multiplication(digit) => item * digit,
+                    MonkeyOperators::MultiplicationSelf => item * item,
                 };
-                let tested_value = new_item_value / self.TestDivision;
-                let new_monkey = if tested_value * self.TestDivision == new_item_value {
-                    self.TrueMonkey
+
+                if !is_worried {
+                    new_item_value = new_item_value / 3;
+                }
+
+                let tested_value = new_item_value / self.test_division;
+                let new_monkey = if tested_value * self.test_division == new_item_value {
+                    self.true_monkey
                 } else {
-                    self.FalseMonkey
+                    self.false_monkey
                 };
                 (new_monkey, new_item_value)
             })
@@ -45,10 +58,11 @@ impl Monkey {
             Monkey {
                 items: Vec::new(),
                 operation: self.operation,
-                TestDivision: self.TestDivision,
-                FalseMonkey: self.FalseMonkey,
-                TrueMonkey: self.TrueMonkey,
+                test_division: self.test_division,
+                false_monkey: self.false_monkey,
+                true_monkey: self.true_monkey,
             },
+            len,
             result,
         )
     }
@@ -71,7 +85,7 @@ impl FromStr for Monkey {
             .map(|found| found.as_str().parse::<u128>().unwrap())
             .collect::<Vec<u128>>();
 
-        let operator = &lines.get(1).unwrap().split(' ').collect::<Vec<&str>>()[4..=5];
+        let operator = &lines.get(1).unwrap().split(' ').collect::<Vec<&str>>()[6..=7];
         let bla = match operator[0] {
             "+" => MonkeyOperators::Add(operator[1].parse::<u128>().unwrap()),
             "*" => match operator[1].parse::<u128>() {
@@ -103,12 +117,42 @@ impl FromStr for Monkey {
         Ok(Monkey {
             items: starting_items,
             operation: bla,
-            TestDivision: test_division,
-            TrueMonkey: true_monkey,
-            FalseMonkey: false_monkey,
+            test_division,
+            true_monkey,
+            false_monkey,
         })
     }
 }
+
+fn throw_items(monkeys: Vec<Monkey>, is_worried: &bool) -> (Vec<Monkey>, Vec<usize>) {
+    let mut new_monkeys = Vec::new();
+    let mut new_items: Vec<(usize, u128)> = Vec::new();
+
+    let mut total_inspected = vec![0; monkeys.len()];
+
+    for (i, monkey) in monkeys.into_iter().enumerate() {
+        let mut items_thrown_now = new_items
+            .clone()
+            .into_iter()
+            .filter(|(j, _)| *j == i)
+            .map(|(_, item)| item)
+            .collect::<Vec<u128>>();
+
+        let (new_monkey, inspected, items) = monkey.exec_cycle(&mut items_thrown_now, is_worried);
+        new_monkeys.push(new_monkey);
+        total_inspected[i] += inspected;
+
+        for (j, item) in items {
+            if j < i {
+                new_monkeys[j].add_item(item);
+            } else {
+                new_items.push((j, item));
+            }
+        }
+    }
+    (new_monkeys, total_inspected)
+}
+
 pub struct Solution {}
 
 impl Solution {
@@ -132,27 +176,62 @@ impl Assignment for Solution {
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
         let mut cloned_input = input.clone();
-        for cycle in 0..20 {
-            let mut monkeys = Vec::new();
-            for monkey in &cloned_input {
-                let cycle_result = monkey.exec_cycle();
-                for (index, item) in cycle_result.1 {
-                    &cloned_input[index].add_item(item);
-                }
+        let mut inspected = vec![0; cloned_input.len()];
 
-                monkeys.push(cycle_result.0);
+        for _ in 0..20 {
+            let (new_monkeys, new_inspected) = throw_items(cloned_input, &false);
+            cloned_input = new_monkeys;
+
+            for (j, insp) in new_inspected.into_iter().enumerate() {
+                inspected[j] += insp;
             }
 
-            cloned_input = monkeys;
-
-            println!("Cyle: {}, {:?}", cycle, cloned_input);
+            // println!("{:?}", cloned_input);
         }
-        println!("{:?}", input);
-        Some((-1).into())
+
+        inspected.sort();
+        inspected.reverse();
+
+        Some(
+            (inspected
+                .into_iter()
+                .take(2)
+                .map(|i| i as u32)
+                .product::<u32>())
+            .into(),
+        )
     }
 
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
-        Some((-1).into())
+        let mut cloned_input = input.clone();
+        let mut inspected = vec![0; cloned_input.len()];
+
+        for i in 0..10_000 {
+            if i % 1 == 0 {
+                println!("parsing cycle {}", i);
+            }
+
+            let (new_monkeys, new_inspected) = throw_items(cloned_input, &true);
+            cloned_input = new_monkeys;
+
+            for (j, insp) in new_inspected.into_iter().enumerate() {
+                inspected[j] += insp;
+            }
+
+            // println!("{:?}", cloned_input);
+        }
+
+        inspected.sort();
+        inspected.reverse();
+
+        Some(
+            (inspected
+                .into_iter()
+                .take(2)
+                .map(|i| i as u32)
+                .product::<u32>())
+            .into(),
+        )
     }
 }
 
@@ -161,30 +240,30 @@ mod tests {
     use super::*;
 
     static TEST_INPUT: &str = "Monkey 0:
-Starting items: 79, 98
-Operation: new = old * 19
-Test: divisible by 23
+  Starting items: 79, 98
+  Operation: new = old * 19
+  Test: divisible by 23
     If true: throw to monkey 2
     If false: throw to monkey 3
 
 Monkey 1:
-Starting items: 54, 65, 75, 74
-Operation: new = old + 6
-Test: divisible by 19
+  Starting items: 54, 65, 75, 74
+  Operation: new = old + 6
+  Test: divisible by 19
     If true: throw to monkey 2
     If false: throw to monkey 0
 
 Monkey 2:
-Starting items: 79, 60, 97
-Operation: new = old * old
-Test: divisible by 13
+  Starting items: 79, 60, 97
+  Operation: new = old * old
+  Test: divisible by 13
     If true: throw to monkey 1
     If false: throw to monkey 3
 
 Monkey 3:
-Starting items: 74
-Operation: new = old + 3
-Test: divisible by 17
+  Starting items: 74
+  Operation: new = old + 3
+  Test: divisible by 17
     If true: throw to monkey 0
     If false: throw to monkey 1";
 
@@ -201,6 +280,7 @@ Test: divisible by 17
         let sol = Solution::new();
         let input = sol.parse_input(&TEST_INPUT.to_owned());
         let result = sol.gold(&input.unwrap()).unwrap();
-        assert_eq!(result, -1)
+        let tested_result: u32 = 2713310158;
+        assert_eq!(result, tested_result)
     }
 }
