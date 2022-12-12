@@ -207,7 +207,7 @@ impl Assignment for Solution {
         let mut cloned_input = input.clone();
         let mut inspected = vec![0; cloned_input.len()];
 
-        for i in 0..10_000 {
+        for _ in 0..10_000 {
             let (new_monkeys, new_inspected) = throw_items(cloned_input, &true);
             cloned_input = new_monkeys;
 

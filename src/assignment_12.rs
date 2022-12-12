@@ -60,39 +60,37 @@ impl std::str::FromStr for Grid {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let a_index = ('a' as u8) - 1;
-        let elevations: Vec<Vec<u8>> = s
-            .lines()
-            .into_iter()
-            .map(|line| {
-                line.chars()
-                    .map(|c| match c {
-                        // 'S' => 0,
-                        'S' => 27,
-                        // 'E' => 27,
-                        'E' => 0,
-                        c => 27 - ((c as u8) - a_index),
-                    })
-                    .collect()
-            })
-            .collect();
 
         let mut start_x = 0;
         let mut start_y = 0;
         let mut end_x = 0;
         let mut end_y = 0;
 
-        for (i, v) in elevations.iter().enumerate() {
-            for (j, elevation) in v.into_iter().enumerate() {
-                if *elevation == 0 {
-                    start_y = i;
-                    start_x = j;
-                }
-                if *elevation == 27 {
-                    end_y = i;
-                    end_x = j;
-                }
-            }
-        }
+        let elevations: Vec<Vec<u8>> = s
+            .lines()
+            .into_iter()
+            .enumerate()
+            .map(|(i, line)| {
+                line.chars()
+                    .enumerate()
+                    .map(|(j, c)| match c {
+                        // 'S' => 0,
+                        'S' => {
+                            end_x = j;
+                            end_y = i;
+                            26
+                        }
+                        // 'E' => 27,
+                        'E' => {
+                            start_x = j;
+                            start_y = i;
+                            1
+                        }
+                        c => 27 - ((c as u8) - a_index),
+                    })
+                    .collect()
+            })
+            .collect();
 
         Ok(Grid {
             elevations,
@@ -100,18 +98,6 @@ impl std::str::FromStr for Grid {
             end: Coord::new(end_y, end_x),
         })
     }
-}
-
-fn debug_print(distances: &HashMap<Coord, u32>, grid: &Grid) {
-    let total_x = grid.elevations[0].len();
-    let total_y = grid.elevations.len();
-    let mut arr = vec![vec![0; total_x]; total_y];
-
-    for (coord, distance) in distances {
-        arr[coord.y][coord.x] = distance.to_owned();
-    }
-
-    println!("{:?}", arr);
 }
 
 pub struct Solution {}
@@ -135,13 +121,7 @@ impl Assignment for Solution {
         let mut visited = HashSet::new();
         distances.insert(grid.start.clone(), 0);
 
-        let mut debug_index = 0;
-
-        // while !visited.contains(&grid.end) {
         while distances.len() > visited.len() {
-            // println!("{} ({}, {})", debug_index, distances.len(), visited.len());
-            debug_index += 1;
-
             let mut sorted_distances = distances.clone().into_iter().collect::<Vec<(Coord, u32)>>();
             sorted_distances.sort_by_key(|(_, distance)| *distance);
             let (to_check, distance) = *sorted_distances
@@ -155,26 +135,51 @@ impl Assignment for Solution {
                 if !distances.contains_key(&coord) {
                     distances.insert(coord, distance + 1);
                 } else if distances.get(&coord).unwrap() > &(distance + 1) {
-                    println!("got here2");
                     distances.insert(coord, distance + 1);
                 }
             }
 
             visited.insert(to_check.to_owned());
-
-            if debug_index > 3000 {
-                break;
-            }
         }
-
-        // println!("{:?}", distances);
-        debug_print(&distances, &grid);
 
         Some((*distances.get(&grid.end).unwrap()).into())
     }
 
     fn gold(&self, grid: &Self::Input) -> Option<Self::Output> {
-        Some((-1).into())
+        let mut distances = HashMap::new();
+        let mut visited = HashSet::new();
+        distances.insert(grid.start.clone(), 0);
+
+        while distances.len() > visited.len() {
+            let mut sorted_distances = distances.clone().into_iter().collect::<Vec<(Coord, u32)>>();
+            sorted_distances.sort_by_key(|(_, distance)| *distance);
+            let (to_check, distance) = *sorted_distances
+                .iter()
+                .filter(|(coord, _)| !visited.contains(coord))
+                .collect::<Vec<&(Coord, u32)>>()
+                .get(0)
+                .unwrap();
+
+            for coord in grid.possible_next(to_check) {
+                if !distances.contains_key(&coord) {
+                    distances.insert(coord, distance + 1);
+                } else if distances.get(&coord).unwrap() > &(distance + 1) {
+                    distances.insert(coord, distance + 1);
+                }
+            }
+
+            visited.insert(to_check.to_owned());
+        }
+
+        Some(
+            distances
+                .into_iter()
+                .filter(|(coord, _)| grid.elevations[coord.y][coord.x] == 26)
+                .map(|(_, d)| d)
+                .min()
+                .unwrap()
+                .into(),
+        )
     }
 }
 
@@ -182,25 +187,33 @@ impl Assignment for Solution {
 mod tests {
     use super::*;
 
-    static TEST_INPUT: &str = "Sabqponm
-abcryxxl
-accszExk
-acctuvwj
-abdefghi";
+    static TEST_INPUT: [(&str, i32, i32); 3] = [
+        ("Sabqponm\nabcryxxl\naccszExk\nacctuvwj\nabdefghi", 31, 29),
+        ("SEzyxwv\napqrstu\nbonmlkj\ncdefghi", 27, 26),
+        (
+            "xwvsron\nyyutqpm\nSEayxwv\nbpqrstu\nbonmlkj\ncdefghi",
+            33,
+            33,
+        ),
+    ];
 
     #[test]
     fn test_silver() {
         let sol = Solution::new();
-        let input = sol.parse_input(&TEST_INPUT.to_owned());
-        let result = sol.silver(&input.unwrap()).unwrap();
-        assert_eq!(result, 31)
+        for (raw, expected, _) in TEST_INPUT {
+            let input = sol.parse_input(&raw.to_owned());
+            let result = sol.silver(&input.unwrap()).unwrap();
+            assert_eq!(result, expected)
+        }
     }
 
     #[test]
     fn test_gold() {
         let sol = Solution::new();
-        let input = sol.parse_input(&TEST_INPUT.to_owned());
-        let result = sol.gold(&input.unwrap()).unwrap();
-        assert_eq!(result, -1)
+        for (raw, _, expected) in TEST_INPUT {
+            let input = sol.parse_input(&raw.to_owned());
+            let result = sol.gold(&input.unwrap()).unwrap();
+            assert_eq!(result, expected)
+        }
     }
 }
