@@ -1,6 +1,8 @@
+use std::collections::{HashMap, HashSet};
+
 use crate::{Assignment, Output};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct Coord {
     x: usize,
     y: usize,
@@ -12,28 +14,28 @@ impl Coord {
     }
 }
 
+// impl Ord for Coord {}
+
 #[derive(Debug)]
 pub struct Grid {
     elevations: Vec<Vec<u8>>,
     start: Coord,
+    end: Coord,
 }
 
 impl Grid {
-    fn is_at_goal(&self, current_position: &Coord) -> bool {
-        self.elevations[current_position.y][current_position.x] == 27
-    }
-
     fn possible_next(&self, current_position: &Coord) -> Vec<Coord> {
         let mut possibilities = Vec::new();
         let current_elevation = self.elevations[current_position.y][current_position.x];
-        let size = self.elevations.len();
+        let y_size = self.elevations.len();
+        let x_size = self.elevations[0].len();
 
         if current_position.y > 0
             && self.elevations[current_position.y - 1][current_position.x] <= current_elevation + 1
         {
             possibilities.push(Coord::new(current_position.y - 1, current_position.x));
         }
-        if current_position.y < size - 1
+        if current_position.y < y_size - 1
             && self.elevations[current_position.y + 1][current_position.x] <= current_elevation + 1
         {
             possibilities.push(Coord::new(current_position.y + 1, current_position.x));
@@ -43,7 +45,7 @@ impl Grid {
         {
             possibilities.push(Coord::new(current_position.y, current_position.x - 1));
         }
-        if current_position.x < size - 1
+        if current_position.x < x_size - 1
             && self.elevations[current_position.y][current_position.x + 1] <= current_elevation + 1
         {
             possibilities.push(Coord::new(current_position.y, current_position.x + 1));
@@ -64,31 +66,52 @@ impl std::str::FromStr for Grid {
             .map(|line| {
                 line.chars()
                     .map(|c| match c {
-                        'S' => 0,
-                        'E' => 27,
-                        c => (c as u8) - a_index,
+                        // 'S' => 0,
+                        'S' => 27,
+                        // 'E' => 27,
+                        'E' => 0,
+                        c => 27 - ((c as u8) - a_index),
                     })
                     .collect()
             })
             .collect();
 
-        let mut x = 0;
-        let mut y = 0;
+        let mut start_x = 0;
+        let mut start_y = 0;
+        let mut end_x = 0;
+        let mut end_y = 0;
 
         for (i, v) in elevations.iter().enumerate() {
             for (j, elevation) in v.into_iter().enumerate() {
                 if *elevation == 0 {
-                    y = i;
-                    x = j;
+                    start_y = i;
+                    start_x = j;
+                }
+                if *elevation == 27 {
+                    end_y = i;
+                    end_x = j;
                 }
             }
         }
 
         Ok(Grid {
             elevations,
-            start: Coord::new(y, x),
+            start: Coord::new(start_y, start_x),
+            end: Coord::new(end_y, end_x),
         })
     }
+}
+
+fn debug_print(distances: &HashMap<Coord, u32>, grid: &Grid) {
+    let total_x = grid.elevations[0].len();
+    let total_y = grid.elevations.len();
+    let mut arr = vec![vec![0; total_x]; total_y];
+
+    for (coord, distance) in distances {
+        arr[coord.y][coord.x] = distance.to_owned();
+    }
+
+    println!("{:?}", arr);
 }
 
 pub struct Solution {}
@@ -108,32 +131,46 @@ impl Assignment for Solution {
     }
 
     fn silver(&self, grid: &Self::Input) -> Option<Self::Output> {
-        println!("{:?}", grid);
-        let mut possible_paths = vec![vec![grid.start.clone()]];
-        let mut winner_path = Vec::new();
+        let mut distances = HashMap::new();
+        let mut visited = HashSet::new();
+        distances.insert(grid.start.clone(), 0);
 
-        loop {
-            let mut new_possible_paths = Vec::new();
-            for path in possible_paths {
-                for new_coord in grid.possible_next(path.last().unwrap()) {
-                    if grid.is_at_goal(&new_coord) {
-                        winner_path = path.clone();
-                        winner_path.push(new_coord);
-                        break;
-                    } else if !path.contains(&new_coord) {
-                        let mut new_path = path.clone();
-                        new_path.push(new_coord);
-                        new_possible_paths.push(new_path);
-                    }
+        let mut debug_index = 0;
+
+        // while !visited.contains(&grid.end) {
+        while distances.len() > visited.len() {
+            // println!("{} ({}, {})", debug_index, distances.len(), visited.len());
+            debug_index += 1;
+
+            let mut sorted_distances = distances.clone().into_iter().collect::<Vec<(Coord, u32)>>();
+            sorted_distances.sort_by_key(|(_, distance)| *distance);
+            let (to_check, distance) = *sorted_distances
+                .iter()
+                .filter(|(coord, _)| !visited.contains(coord))
+                .collect::<Vec<&(Coord, u32)>>()
+                .get(0)
+                .unwrap();
+
+            for coord in grid.possible_next(to_check) {
+                if !distances.contains_key(&coord) {
+                    distances.insert(coord, distance + 1);
+                } else if distances.get(&coord).unwrap() > &(distance + 1) {
+                    println!("got here2");
+                    distances.insert(coord, distance + 1);
                 }
             }
 
-            possible_paths = new_possible_paths;
+            visited.insert(to_check.to_owned());
+
+            if debug_index > 3000 {
+                break;
+            }
         }
 
-        println!("{:?}", winner_path);
+        // println!("{:?}", distances);
+        debug_print(&distances, &grid);
 
-        Some((-1).into())
+        Some((*distances.get(&grid.end).unwrap()).into())
     }
 
     fn gold(&self, grid: &Self::Input) -> Option<Self::Output> {
