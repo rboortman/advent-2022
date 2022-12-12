@@ -1,6 +1,7 @@
 mod assignment_1;
 mod assignment_10;
 mod assignment_11;
+mod assignment_12;
 mod assignment_2;
 mod assignment_3;
 mod assignment_4;
@@ -36,6 +37,7 @@ pub fn solve(day: u8) {
         9 => assignment_9::Solution::new().run(raw_input),
         10 => assignment_10::Solution::new().run(raw_input),
         11 => assignment_11::Solution::new().run(raw_input),
+        12 => assignment_12::Solution::new().run(raw_input),
         d => panic!("Day {} has not been solved yet", d),
     };
 
