@@ -56,36 +56,12 @@ impl Ord for PacketValue {
         // println!("Self: {:?}\nOther: {:?}\n", self, other);
         match self {
             PacketValue::Int(left_d) => match other {
-                PacketValue::Int(right_d) => {
-                    if left_d < right_d {
-                        Ordering::Less
-                    } else if left_d > right_d {
-                        Ordering::Greater
-                    } else {
-                        Ordering::Equal
-                    }
-                }
+                PacketValue::Int(right_d) => left_d.cmp(right_d),
                 PacketValue::Array(_) => PacketValue::Array(vec![self.clone()]).cmp(other),
             },
             PacketValue::Array(left_a) => match other {
                 PacketValue::Int(_) => self.cmp(&PacketValue::Array(vec![other.clone()])),
-                PacketValue::Array(right_a) => {
-                    for (i, left_d) in left_a.into_iter().enumerate() {
-                        let right_d = match right_a.get(i) {
-                            Some(pv) => pv,
-                            None => return Ordering::Greater,
-                        };
-                        let result_order = left_d.cmp(right_d);
-                        if result_order != Ordering::Equal {
-                            return result_order;
-                        }
-                    }
-
-                    match right_a.get(left_a.len()) {
-                        Some(_) => Ordering::Less,
-                        None => Ordering::Equal,
-                    }
-                }
+                PacketValue::Array(right_a) => left_a.cmp(right_a),
             },
         }
     }
@@ -181,9 +157,6 @@ mod tests {
 
 [1,[2,[3,[4,[5,6,7]]]],8,9]
 [1,[2,[3,[4,[5,6,0]]]],8,9]";
-
-    static TEST_INPUT2: &str = "[1,1,5,1,1]
-[[1],[2,3,4]]";
 
     #[test]
     fn test_silver() {
