@@ -96,7 +96,7 @@ impl Assignment for Solution {
             input
                 .into_iter()
                 .enumerate()
-                .map(|(i, (left, right))| ((i + 1) as i32, left.cmp(right) == Ordering::Less))
+                .map(|(i, (left, right))| ((i + 1) as i32, left < right))
                 .filter(|(_, b)| *b)
                 .map(|(i, _)| i)
                 .sum::<i32>()
