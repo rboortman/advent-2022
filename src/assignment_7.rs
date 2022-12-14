@@ -18,7 +18,7 @@ impl Directory {
     }
 
     fn add_file(&mut self, f: File, path: &VecDeque<String>) {
-        if path.len() < 1 {
+        if path.is_empty() {
             self.files.push(f);
         } else {
             let mut cloned_path = path.clone();
@@ -33,7 +33,7 @@ impl Directory {
     }
 
     fn add_directory(&mut self, d: Directory, path: &VecDeque<String>) {
-        if path.len() < 1 {
+        if path.is_empty() {
             self.subdirectories.push(d);
         } else {
             let mut cloned_path = path.clone();
@@ -131,13 +131,13 @@ impl Assignment for Solution {
     type Input = Directory;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         let mut operations = VecDeque::new();
         let mut current_operation = Operation::new(Command::Cd(String::from("/")));
 
         for line in input.lines().skip(1) {
             let words: Vec<&str> = line.split(' ').collect();
-            match words.get(0) {
+            match words.first() {
                 Some(&"$") => match words.get(1) {
                     Some(&"ls") => {
                         operations.push_back(current_operation);
@@ -165,14 +165,14 @@ impl Assignment for Solution {
                     for line in op.output {
                         let words: Vec<&str> = line.split(' ').collect();
                         let name = words.get(1).unwrap().to_string();
-                        match words.get(0) {
+                        match words.first() {
                             Some(&"dir") => {
                                 let new_dir = Directory::new(name);
                                 root.add_directory(new_dir, &current_dir);
                                 // self.add_directory(new_dir)
                             }
                             _ => {
-                                let size: i32 = words.get(0).unwrap().parse().unwrap();
+                                let size: i32 = words.first().unwrap().parse().unwrap();
                                 root.add_file(File::new(name, size), &current_dir);
                             }
                         }
@@ -196,7 +196,7 @@ impl Assignment for Solution {
         Some(
             root.find_dir_with_lower_size(100000)
                 .into_iter()
-                .fold(0, |acc, s| acc + s)
+                .sum::<i32>()
                 .into(),
         )
     }
@@ -211,8 +211,7 @@ impl Assignment for Solution {
         sizes.sort_by(|a, b| a.1.cmp(&b.1));
         let to_remove = sizes
             .into_iter()
-            .filter(|(_, s)| s >= &minimal_removal)
-            .next()
+            .find(|(_, s)| s >= &minimal_removal)
             .unwrap();
 
         println!("{:?}", to_remove);

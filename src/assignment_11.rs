@@ -41,10 +41,10 @@ impl Monkey {
                 };
 
                 if !is_worried {
-                    new_item_value = new_item_value / 3;
+                    new_item_value /= 3;
                 }
 
-                new_item_value = new_item_value % product;
+                new_item_value %= product;
 
                 let tested_value = new_item_value / self.test_division;
                 let new_monkey = if tested_value * self.test_division == new_item_value {
@@ -82,7 +82,7 @@ impl FromStr for Monkey {
         let digit_regex = Regex::new(r"\d+").unwrap();
 
         let starting_items = digit_regex
-            .find_iter(lines.get(0).unwrap())
+            .find_iter(lines.first().unwrap())
             .map(|found| found.as_str().parse::<u128>().unwrap())
             .collect::<Vec<u128>>();
 
@@ -100,19 +100,19 @@ impl FromStr for Monkey {
             .find_iter(lines.get(2).unwrap())
             .map(|found| found.as_str().parse::<u128>().unwrap())
             .collect::<Vec<u128>>()
-            .get(0)
+            .first()
             .unwrap();
         let true_monkey = *digit_regex
             .find_iter(lines.get(3).unwrap())
             .map(|found| found.as_str().parse::<usize>().unwrap())
             .collect::<Vec<usize>>()
-            .get(0)
+            .first()
             .unwrap();
         let false_monkey = *digit_regex
             .find_iter(lines.get(4).unwrap())
             .map(|found| found.as_str().parse::<usize>().unwrap())
             .collect::<Vec<usize>>()
-            .get(0)
+            .first()
             .unwrap();
 
         Ok(Monkey {
@@ -168,7 +168,7 @@ impl Assignment for Solution {
     type Input = Vec<Monkey>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         Some(
             input
                 .split("\n\n")

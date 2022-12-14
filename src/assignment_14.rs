@@ -25,7 +25,7 @@ impl Grid {
         max_y: usize,
     ) -> Grid {
         let mut grid = vec![vec![Item::Empty; max_x - x_offset + 1]; max_y - y_offset + 1];
-        for (x, y) in paths.clone() {
+        for (x, y) in paths {
             grid[y - y_offset][x - x_offset] = Item::Path
         }
 
@@ -70,7 +70,7 @@ impl Grid {
     fn get_total_rocks(&self) -> i32 {
         self.grid
             .iter()
-            .map(|row| row.into_iter().filter(|item| **item == Item::Rock).count() as i32)
+            .map(|row| row.iter().filter(|item| **item == Item::Rock).count() as i32)
             .sum::<i32>()
     }
 
@@ -142,10 +142,10 @@ impl Assignment for Solution {
     type Input = Grid;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         let coords = input
             .lines()
-            .map(|line| {
+            .flat_map(|line| {
                 let coords_row = line
                     .split(" -> ")
                     .map(|coord_str| {
@@ -179,7 +179,6 @@ impl Assignment for Solution {
                 }
                 resulting_coords
             })
-            .flatten()
             .collect::<Vec<(usize, usize)>>();
 
         let mut min_x = usize::MAX;

@@ -39,7 +39,7 @@ impl Assignment for Solution {
     type Input = (VecDeque<VecDeque<Crate>>, VecDeque<Instruction>);
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         let mut stacks = VecDeque::new();
         let mut instructions = VecDeque::new();
         let mut convert_stacks = true;
@@ -53,7 +53,7 @@ impl Assignment for Solution {
         }
 
         for line in input.lines() {
-            if line == "" {
+            if line.is_empty() {
                 convert_stacks = false;
                 continue;
             }

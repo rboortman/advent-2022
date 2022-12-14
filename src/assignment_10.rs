@@ -42,7 +42,7 @@ impl Assignment for Solution {
     type Input = Vec<Instruction>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         Some(input.lines().map(|l| l.parse().unwrap()).collect())
     }
 

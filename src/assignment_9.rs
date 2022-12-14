@@ -91,12 +91,12 @@ fn calculate_knot_movement(input: &Vec<Direction>, knot_size: usize) -> usize {
         let (change_vector, times) = dir.into();
 
         for _ in 0..times {
-            let mut new_knots = vec![knots.get(0).unwrap().clone() + change_vector];
+            let mut new_knots = vec![*knots.first().unwrap() + change_vector];
             for (i, knot) in knots.into_iter().enumerate().skip(1) {
                 new_knots.push(knot.move_towards(&new_knots[i - 1]))
             }
             knots = new_knots;
-            set.insert(knots.get(knots.len() - 1).unwrap().clone());
+            set.insert(*knots.last().unwrap());
         }
     }
 
@@ -107,7 +107,7 @@ impl Assignment for Solution {
     type Input = Vec<Direction>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         Some(input.lines().map(|l| l.parse().unwrap()).collect())
     }
 

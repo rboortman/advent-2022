@@ -12,7 +12,7 @@ impl Assignment for Solution {
     type Input = Vec<i32>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         None
     }
 

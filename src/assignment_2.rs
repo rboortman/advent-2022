@@ -69,12 +69,12 @@ impl Assignment for Solution {
     type Input = Vec<(Played, Played, Outcome)>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         let mut result = Vec::new();
         for line in input.lines() {
             let (first, second) = line
-                .split_once(" ")
-                .expect(format!("Could not split line {}", line).as_str());
+                .split_once(' ')
+                .unwrap_or_else(|| panic!("Could not split line {}", line));
 
             let first_played = match first {
                 "A" => Played::Rock,
@@ -82,8 +82,7 @@ impl Assignment for Solution {
                 "C" => Played::Scissors,
                 s => panic!("Unknown symbol {s}"),
             };
-            let second_played: Played;
-            second_played = match second {
+            let second_played = match second {
                 "X" => Played::Rock,
                 "Y" => Played::Paper,
                 "Z" => Played::Scissors,
@@ -105,7 +104,7 @@ impl Assignment for Solution {
         Some(
             input
                 .iter()
-                .map(|(a, b, _outcome)| translate_score(b, &get_outcome(&a, &b)))
+                .map(|(a, b, _outcome)| translate_score(b, &get_outcome(a, b)))
                 .sum::<i32>()
                 .into(),
         )
@@ -115,7 +114,7 @@ impl Assignment for Solution {
         Some(
             input
                 .iter()
-                .map(|(a, _b, outcome)| translate_score(&get_played(&a, &outcome), &outcome))
+                .map(|(a, _b, outcome)| translate_score(&get_played(a, outcome), outcome))
                 .sum::<i32>()
                 .into(),
         )

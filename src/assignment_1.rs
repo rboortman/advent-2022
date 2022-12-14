@@ -12,7 +12,7 @@ impl Assignment for Solution {
     type Input = Vec<i32>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         let mut result = Vec::new();
         let mut current = 0;
         for line in input.lines() {
@@ -21,7 +21,7 @@ impl Assignment for Solution {
                     result.push(current);
                     current = 0;
                 }
-                _ => current = current + line.parse::<i32>().unwrap(),
+                _ => current += line.parse::<i32>().unwrap(),
             }
         }
         result.push(current);

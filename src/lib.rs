@@ -23,7 +23,6 @@ use std::{
     io,
     time::Instant,
 };
-use termion;
 
 pub fn solve(day: u8) {
     let raw_input = get_input(&day);
@@ -74,7 +73,7 @@ pub trait Assignment {
     type Input;
     type Output: Display;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input>;
+    fn parse_input(&self, input: &str) -> Option<Self::Input>;
 
     fn silver(&self, input: &Self::Input) -> Option<Self::Output>;
     fn gold(&self, input: &Self::Input) -> Option<Self::Output>;
@@ -119,7 +118,8 @@ fn build_client(session_cookie: &str, content_type: &str) -> Result<Client, Stri
     let cookie_header = HeaderValue::from_str(&format!("session={}", session_cookie.trim()))
         .map_err(|err| format!("Invalid session cookie: {}", err))?;
     let content_type_header = HeaderValue::from_str(content_type).unwrap();
-    let user_agent = format!("User-Agent: github.com/rboortman/advent-2022 by ron@techforce1.nl");
+    let user_agent =
+        String::from("User-Agent: github.com/rboortman/advent-2022 by ron@techforce1.nl");
     let user_agent_header = HeaderValue::from_str(&user_agent).unwrap();
 
     let mut headers = HeaderMap::new();
@@ -214,7 +214,7 @@ async fn send_answer(day: u8, level: u8, answer: Output) {
         .text()
         .collect::<String>()
         .lines()
-        .filter(|l| !l.trim().starts_with("["))
+        .filter(|l| !l.trim().starts_with('['))
         .fold(String::from(""), |acc, line| acc + line.trim())
         .replace("You guessed", "You guessed: ");
 

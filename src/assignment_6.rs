@@ -20,7 +20,7 @@ impl Assignment for Solution {
     type Input = VecDeque<char>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         Some(input.chars().collect())
     }
 

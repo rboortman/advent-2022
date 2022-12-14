@@ -18,7 +18,7 @@ impl Coord {
 
 #[derive(Debug)]
 pub struct Grid {
-    elevations: Vec<Vec<u8>>,
+    elevations: Vec<Vec<u32>>,
     start: Coord,
     end: Coord,
 }
@@ -59,14 +59,14 @@ impl std::str::FromStr for Grid {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let a_index = ('a' as u8) - 1;
+        let a_index = ('a' as u32) - 1;
 
         let mut start_x = 0;
         let mut start_y = 0;
         let mut end_x = 0;
         let mut end_y = 0;
 
-        let elevations: Vec<Vec<u8>> = s
+        let elevations: Vec<Vec<u32>> = s
             .lines()
             .into_iter()
             .enumerate()
@@ -86,7 +86,7 @@ impl std::str::FromStr for Grid {
                             start_y = i;
                             1
                         }
-                        c => 27 - ((c as u8) - a_index),
+                        c => 27 - ((c as u32) - a_index),
                     })
                     .collect()
             })
@@ -112,7 +112,7 @@ impl Assignment for Solution {
     type Input = Grid;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         Some(input.parse().unwrap())
     }
 
@@ -132,9 +132,9 @@ impl Assignment for Solution {
                 .unwrap();
 
             for coord in grid.possible_next(to_check) {
-                if !distances.contains_key(&coord) {
-                    distances.insert(coord, distance + 1);
-                } else if distances.get(&coord).unwrap() > &(distance + 1) {
+                if !distances.contains_key(&coord)
+                    || distances.get(&coord).unwrap() > &(distance + 1)
+                {
                     distances.insert(coord, distance + 1);
                 }
             }
@@ -161,9 +161,9 @@ impl Assignment for Solution {
                 .unwrap();
 
             for coord in grid.possible_next(to_check) {
-                if !distances.contains_key(&coord) {
-                    distances.insert(coord, distance + 1);
-                } else if distances.get(&coord).unwrap() > &(distance + 1) {
+                if !distances.contains_key(&coord)
+                    || distances.get(&coord).unwrap() > &(distance + 1)
+                {
                     distances.insert(coord, distance + 1);
                 }
             }

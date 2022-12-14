@@ -34,15 +34,15 @@ impl Assignment for Solution {
     type Input = Vec<(Elf, Elf)>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         let mut result = Vec::new();
         for line in input.lines() {
-            let (first, second) = line.split_once(",").unwrap();
+            let (first, second) = line.split_once(',').unwrap();
 
-            let (first_lower, first_upper) = first.split_once("-").unwrap();
+            let (first_lower, first_upper) = first.split_once('-').unwrap();
             let first_elf = Elf::new(first_lower.parse().unwrap(), first_upper.parse().unwrap());
 
-            let (second_lower, second_upper) = second.split_once("-").unwrap();
+            let (second_lower, second_upper) = second.split_once('-').unwrap();
             let second_elf = Elf::new(second_lower.parse().unwrap(), second_upper.parse().unwrap());
 
             result.push((first_elf, second_elf));

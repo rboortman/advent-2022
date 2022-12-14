@@ -4,7 +4,7 @@ use regex::Regex;
 
 use crate::{Assignment, Output};
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PacketValue {
     Array(Vec<PacketValue>),
     Int(u8),
@@ -29,7 +29,7 @@ impl std::str::FromStr for PacketValue {
                 .map(|d| match d {
                     "" => PacketValue::Array(Vec::new()),
                     _ => {
-                        if d.chars().next().unwrap() == 'x' {
+                        if d.starts_with('x') {
                             x.get(d).unwrap().to_owned()
                         } else {
                             PacketValue::Int(d.parse().unwrap())
@@ -51,18 +51,25 @@ impl std::str::FromStr for PacketValue {
     }
 }
 
+impl PartialOrd for PacketValue {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 impl Ord for PacketValue {
     fn cmp(&self, other: &Self) -> Ordering {
         // println!("Self: {:?}\nOther: {:?}\n", self, other);
-        match self {
-            PacketValue::Int(left_d) => match other {
-                PacketValue::Int(right_d) => left_d.cmp(right_d),
-                PacketValue::Array(_) => PacketValue::Array(vec![self.clone()]).cmp(other),
-            },
-            PacketValue::Array(left_a) => match other {
-                PacketValue::Int(_) => self.cmp(&PacketValue::Array(vec![other.clone()])),
-                PacketValue::Array(right_a) => left_a.cmp(right_a),
-            },
+
+        match (self, other) {
+            (PacketValue::Array(left_a), PacketValue::Array(right_a)) => left_a.cmp(right_a),
+            (PacketValue::Array(_), PacketValue::Int(_)) => {
+                self.cmp(&PacketValue::Array(vec![other.clone()]))
+            }
+            (PacketValue::Int(_), PacketValue::Array(_)) => {
+                PacketValue::Array(vec![self.clone()]).cmp(other)
+            }
+            (PacketValue::Int(left_d), PacketValue::Int(right_d)) => left_d.cmp(right_d),
         }
     }
 }
@@ -79,7 +86,7 @@ impl Assignment for Solution {
     type Input = Vec<(PacketValue, PacketValue)>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         Some(
             input
                 .split("\n\n")
@@ -94,7 +101,7 @@ impl Assignment for Solution {
     fn silver(&self, input: &Self::Input) -> Option<Self::Output> {
         Some(
             input
-                .into_iter()
+                .iter()
                 .enumerate()
                 .map(|(i, (left, right))| ((i + 1) as i32, left < right))
                 .filter(|(_, b)| *b)
@@ -107,13 +114,11 @@ impl Assignment for Solution {
     fn gold(&self, input: &Self::Input) -> Option<Self::Output> {
         let first_divider: PacketValue = "[[2]]".parse().unwrap();
         let second_divider: PacketValue = "[[6]]".parse().unwrap();
-        let mut sorted_packets = input
-            .into_iter()
-            .fold(Vec::new(), |mut total, (left, right)| {
-                total.push(left.to_owned());
-                total.push(right.to_owned());
-                total
-            });
+        let mut sorted_packets = input.iter().fold(Vec::new(), |mut total, (left, right)| {
+            total.push(left.to_owned());
+            total.push(right.to_owned());
+            total
+        });
         sorted_packets.push(first_divider.clone());
         sorted_packets.push(second_divider.clone());
         sorted_packets.sort_by(PacketValue::cmp);

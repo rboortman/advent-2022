@@ -26,7 +26,7 @@ fn is_visible(grid: &Vec<Vec<u32>>, i: usize, j: usize) -> bool {
         visible[3] = visible[3] && grid[x][j] < tree;
     }
 
-    visible.into_iter().fold(false, |acc, b| acc || b)
+    visible.into_iter().any(|b| b)
 }
 
 fn scenic_score(grid: &Vec<Vec<u32>>, i: usize, j: usize) -> u32 {
@@ -68,7 +68,7 @@ impl Assignment for Solution {
     type Input = Vec<Vec<u32>>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         let mut result = Vec::new();
         for line in input.lines() {
             let row: Vec<u32> = line
@@ -85,14 +85,14 @@ impl Assignment for Solution {
         let size = input.len();
         let mut count = 0;
 
-        for (i, v) in input.into_iter().enumerate() {
-            for (j, _) in v.into_iter().enumerate() {
+        for (i, v) in input.iter().enumerate() {
+            for (j, _) in v.iter().enumerate() {
                 if i == 0 || j == 0 || i == size - 1 || j == size - 1 {
                     count += 1;
                     continue;
                 }
 
-                if is_visible(&input, i, j) {
+                if is_visible(input, i, j) {
                     count += 1;
                 }
             }
@@ -105,13 +105,13 @@ impl Assignment for Solution {
         let size = input.len();
         let mut max_scenic_score = 0;
 
-        for (i, v) in input.into_iter().enumerate() {
-            for (j, _) in v.into_iter().enumerate() {
+        for (i, v) in input.iter().enumerate() {
+            for (j, _) in v.iter().enumerate() {
                 if i == 0 || j == 0 || i == size - 1 || j == size - 1 {
                     continue;
                 }
 
-                let score = scenic_score(&input, i, j);
+                let score = scenic_score(input, i, j);
                 if score > max_scenic_score {
                     max_scenic_score = score;
                 }

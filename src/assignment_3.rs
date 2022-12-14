@@ -87,7 +87,7 @@ impl Assignment for Solution {
     type Input = Vec<Bag>;
     type Output = Output;
 
-    fn parse_input(&self, input: &String) -> Option<Self::Input> {
+    fn parse_input(&self, input: &str) -> Option<Self::Input> {
         let mut result = Vec::new();
         for line in input.lines() {
             result.push(Bag::new(line));
