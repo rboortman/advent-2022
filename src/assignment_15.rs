@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 use crate::{Assignment, Output};
 
@@ -41,22 +41,56 @@ impl Sensor {
         (self.location.0 - location.0).abs() + (self.location.1 - location.1).abs()
     }
 
-    fn coverage(&self, max_x: i32, max_y: i32) -> Vec<(usize, usize)> {
-        let mut result = Vec::new();
-
-        for i in std::cmp::max(0, self.location.0 - self.distance_to_beacon)
-            ..std::cmp::min(max_x, self.location.0 + self.distance_to_beacon)
+    fn get_segment(&self, x: i32, max_y: i32) -> Option<(i32, i32)> {
+        if x < self.location.0 - self.distance_to_beacon
+            || self.location.0 + self.distance_to_beacon < x
         {
-            for j in std::cmp::max(0, self.location.1 - self.distance_to_beacon)
-                ..std::cmp::min(max_y, self.location.1 + self.distance_to_beacon)
-            {
-                if self.distance((i, j)) <= self.distance_to_beacon {
-                    result.push((i as usize, j as usize));
+            None
+        } else {
+            let distance = self.distance_to_beacon - (self.location.0 - x).abs();
+            let a = std::cmp::max(0, self.location.1 - distance);
+            let b = std::cmp::min(max_y, self.location.1 + distance);
+            Some((std::cmp::min(a, b), std::cmp::max(a, b)))
+        }
+    }
+}
+
+fn can_merge(a: &(i32, i32), b: &(i32, i32)) -> Option<(i32, i32)> {
+    if (a.0 <= b.1 && a.1 + 1 >= b.0) || (b.0 <= a.1 && b.1 + 1 >= a.0) {
+        Some((std::cmp::min(a.0, b.0), std::cmp::max(a.1, b.1)))
+    } else {
+        None
+    }
+}
+
+fn merge_line_segments(mut line_segments: VecDeque<(i32, i32)>) -> VecDeque<(i32, i32)> {
+    while line_segments.len() > 2 {
+        let a = line_segments.pop_front().unwrap();
+
+        let mut has_merged = false;
+
+        'inner: for (i, segment) in line_segments.iter().enumerate() {
+            match can_merge(&a, segment) {
+                Some(merged) => {
+                    line_segments.remove(i);
+                    line_segments.push_back(merged);
+                    has_merged = true;
+                    break 'inner;
+                }
+                None => {
+                    continue;
                 }
             }
         }
 
-        result
+        if !has_merged {
+            line_segments.push_back(a);
+        }
+    }
+
+    match can_merge(&line_segments[0], &line_segments[1]) {
+        Some(merged) => VecDeque::from([merged]),
+        None => line_segments,
     }
 }
 
@@ -110,38 +144,22 @@ impl Assignment for Solution {
     }
 
     fn gold(&self, (sensors, _, test_flag): &Self::Input) -> Option<Self::Output> {
-        let max = if *test_flag { 20 } else { 4_000 };
-        let mut x = 0;
-        let mut y = 0;
+        let max = if *test_flag { 20 } else { 4_000_000 };
+        let mut x: i128 = 0;
+        let mut y: i128 = 0;
 
-        println!("{:?}", sensors);
+        for i in 0..=max {
+            let line_segments = sensors
+                .iter()
+                .flat_map(|sensor| sensor.get_segment(i, max))
+                .collect::<VecDeque<(i32, i32)>>();
 
-        let coverage = sensors
-            .iter()
-            .flat_map(|sensor| sensor.coverage(max, max))
-            .collect::<Vec<(usize, usize)>>();
+            let resulting_segments = merge_line_segments(line_segments);
 
-        let mut possible_locations = vec![vec![true; max as usize]; max as usize];
-
-        println!("possible locations len: {}", possible_locations.len());
-
-        for (x, y) in coverage {
-            possible_locations[x][y] = false;
-        }
-
-        println!("got here");
-
-        for (i, row) in possible_locations.iter().enumerate() {
-            if i % 1000 == 0 {
-                println!("Row: {}", i);
-            }
-            match row.iter().position(|b| *b) {
-                Some(j) => {
-                    x = i as i32;
-                    y = j as i32;
-                    break;
-                }
-                None => continue,
+            if resulting_segments.len() > 1 {
+                x = i as i128;
+                y = (std::cmp::max(resulting_segments[0].0, resulting_segments[1].0) - 1) as i128;
+                break;
             }
         }
 
@@ -183,6 +201,6 @@ Sensor at x=20, y=1: closest beacon is at x=15, y=3";
         let input = sol.parse_input(TEST_INPUT);
         let (sensors, beacons, _) = input.unwrap();
         let result = sol.gold(&(sensors, beacons, true)).unwrap();
-        assert_eq!(result, 56_000_012)
+        assert_eq!(result, 56_000_011)
     }
 }
