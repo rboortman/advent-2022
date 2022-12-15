@@ -228,7 +228,7 @@ mod tests {
     #[test]
     fn test_silver() {
         let sol = Solution::new();
-        let input = sol.parse_input(&TEST_INPUT.to_owned());
+        let input = sol.parse_input(TEST_INPUT);
         let result = sol.silver(&input.unwrap()).unwrap();
         assert_eq!(result, 95437)
     }
@@ -236,7 +236,7 @@ mod tests {
     #[test]
     fn test_gold() {
         let sol = Solution::new();
-        let input = sol.parse_input(&TEST_INPUT.to_owned());
+        let input = sol.parse_input(TEST_INPUT);
         let result = sol.gold(&input.unwrap()).unwrap();
         assert_eq!(result, 24933642)
     }
