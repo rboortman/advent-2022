@@ -49,14 +49,6 @@ impl Assignment for Solution {
         let mut input_clone = input.clone();
         for i in 0..input_clone.len() {
             mixing(&mut input_clone, i);
-            // println!(
-            //     "{}: {:?}",
-            //     i + 1,
-            //     input_clone
-            //         .iter()
-            //         .map(|(_, data)| *data)
-            //         .collect::<Vec<i64>>()
-            // );
         }
         let zero_pos = input_clone
             .iter()
@@ -79,14 +71,6 @@ impl Assignment for Solution {
         for _ in 0..10 {
             for i in 0..input_clone.len() {
                 mixing(&mut input_clone, i);
-                // println!(
-                //     "{}: {:?}",
-                //     i + 1,
-                //     input_clone
-                //         .iter()
-                //         .map(|(_, data)| *data)
-                //         .collect::<Vec<i64>>()
-                // );
             }
         }
         let zero_pos = input_clone
