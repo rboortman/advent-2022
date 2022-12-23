@@ -13,3 +13,4 @@ tokio = { version = "1", features = ["full"] }
 regex = "1"
 termion = "2.0.1"
 scraper = "0.13.0"
+pom = "3"
